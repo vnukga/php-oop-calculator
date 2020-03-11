@@ -1,0 +1,15 @@
+<phpunit bootstrap="vendor/autoload.php">
+    <testsuites>
+        <testsuite name="calculator">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+    <filter>
+        <whitelist>
+            <directory suffix=".php">app</directory>
+        </whitelist>
+    </filter>
+    <logging>
+        <log type="coverage-html" target="phpunit_coverage" lowUpperBound="35" highLowerBound="70"/>
+    </logging>
+</phpunit>

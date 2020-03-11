@@ -27,6 +27,16 @@ class ExpressionItems extends SplDoublyLinkedList
     }
 
     /**
+     * Checks if current item is numeric
+     *
+     * @return bool
+     */
+    public function isCurrentItemNumeric() : bool
+    {
+        return $this->checkIsNumeric($this->current());
+    }
+
+    /**
      * Handles expression with numbers and operands
      *
      * @param string $expression
@@ -64,16 +74,6 @@ class ExpressionItems extends SplDoublyLinkedList
          if(!preg_match($this->validationPattern, $expression)) {
              throw new InvalidExpressionException();
          }
-    }
-
-    /**
-     * Checks if current item is numeric
-     *
-     * @return bool
-     */
-    public function isCurrentItemNumeric() : bool
-    {
-        return $this->checkIsNumeric($this->current());
     }
 
     /**

@@ -67,9 +67,9 @@ class Calculator
             }
         } catch (BaseCalculatorException $exception) {
             echo $exception->getMessage();
-            return false;
+            return null;
         }
-        return false;
+        return null;
     }
 
     /**
