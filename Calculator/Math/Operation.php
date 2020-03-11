@@ -3,6 +3,12 @@
 
 namespace App\Math;
 
+use App\Math\Operations\Delete;
+use App\Math\Operations\Minus;
+use App\Math\Operations\Multiply;
+use App\Math\Operations\OperationInterface;
+use App\Math\Operations\Plus;
+
 /**
  * Class Operation
  * @package App\Math
@@ -25,25 +31,45 @@ class Operation
      *
      * @param array $numbers
      * @param string $operand
-     * @return int
+     * @return float
      */
-    public function calculate(array $numbers, string $operand) : int
+    public function calculate(array $numbers, string $operand) : float
     {
         switch ($operand) {
             case '+':
-                $result = $this->plus($numbers);
+                $operation = new Plus();
                 break;
             case '-':
-                $result = $this->minus($numbers);
+                $operation = new Minus();
                 break;
             case '*':
-                $result = $this->multiply($numbers);
+                $operation = new Multiply();
                 break;
             case '/':
-                $result = $this->delete($numbers);
+                $operation = new Delete();
                 break;
         }
-        return $result;
+        return $this->executeOperation($numbers, $operation);
+    }
+
+    /**
+     * Compares two operands priority
+     *
+     * @param string $firstOperand
+     * @param string|null $secondOperand
+     * @return bool
+     */
+    public function compareOperandsPriority(string $firstOperand, ?string $secondOperand) : bool
+    {
+        if(!$secondOperand) {
+            return false;
+        }
+        $firstOperandPriority = $this->getPriority($firstOperand);
+        $secondOperandPriority = $this->getPriority($secondOperand);
+        if($firstOperandPriority && $secondOperandPriority) {
+            return $secondOperandPriority >= $firstOperandPriority;
+        }
+        return false;
     }
 
     /**
@@ -52,7 +78,7 @@ class Operation
      * @param string $operand
      * @return int|null
      */
-    public function getPriority(string $operand) : ?int
+    private function getPriority(string $operand) : ?int
     {
         if($priority = $this->operandPriority[$operand]) {
             return $priority;
@@ -61,46 +87,14 @@ class Operation
     }
 
     /**
-     * Plus method
+     * Executes operation from expression
      *
      * @param array $numbers
-     * @return int
+     * @param OperationInterface $operation
+     * @return float
      */
-    private function plus(array $numbers) : int
+    private function executeOperation(array $numbers, OperationInterface $operation)
     {
-        return $numbers[0] + $numbers[1];
-    }
-
-    /**
-     * Minus method
-     *
-     * @param array $numbers
-     * @return int
-     */
-    private function minus($numbers)
-    {
-        return $numbers[0] - $numbers[1];
-    }
-
-    /**
-     * Multiply method
-     *
-     * @param array $numbers
-     * @return int
-     */
-    private function multiply($numbers)
-    {
-        return $numbers[0] * $numbers[1];
-    }
-
-    /**
-     * Delete method
-     *
-     * @param array $numbers
-     * @return int
-     */
-    private function delete($numbers)
-    {
-        return $numbers[0] / $numbers[1];
+        return $operation->execute($numbers);
     }
 }

@@ -3,6 +3,9 @@
 
 namespace App;
 
+use App\DataStructures\ExpressionItems;
+use App\DataStructures\NumbersStack;
+use App\DataStructures\OperandsStack;
 use App\Math\Operation;
 
 /**
@@ -19,10 +22,26 @@ class Calculator
      * @var Operation
      */
     private $operation;
+
+    /**
+     * Stack with numeric items
+     *
+     * @var NumbersStack
+     */
+    private $numbersStack;
+
+    /**
+     * Stack with operands
+     *
+     * @var OperandsStack
+     */
+    private $operandsStack;
     
     public function __construct()
     {
         $this->operation = new Operation();
+        $this->numbersStack = new NumbersStack();
+        $this->operandsStack = new OperandsStack();
     }
 
     /**
@@ -33,133 +52,68 @@ class Calculator
      */
     public function calculateExpression(string $expression) : ?string
     {
-        $preparedArray = $this->getPreparedArray($expression);
-        $numericArray = [];
-        $characterArray = [];
-        foreach ($preparedArray as $key => $item){
-            $this->handleItem($item, $numericArray, $characterArray);
+        $expressionItems =new ExpressionItems($expression);
+        foreach ($expressionItems as $key => $item){
+            $this->handleItem($item, $expressionItems->isCurrentItemNumeric());
         }
-        while(count($characterArray) > 0) {
-            $currentOperation = array_pop($characterArray);
-            $this->executeCurrentOperation($numericArray, $currentOperation);
+        while(count($this->operandsStack) > 0) {
+            $currentOperation = $this->operandsStack->pop();
+            $this->executeCurrentOperation($currentOperation);
         }
-        if(count($numericArray) === 1) {
-            return $numericArray[0];
+        if(count($this->numbersStack) === 1) {
+            return $this->numbersStack->pop();
         }
         return false;
     }
 
     /**
-     * Splits expression string to array with numeric and character elements
-     *
-     * @param string $expression
-     * @return array
-     */
-    private function getPreparedArray(string $expression) : array
-    {
-        $expressionStringAsArray = str_split($expression);
-        $preparedArray = [];
-        for ($i = 0; $i < $arrayLength = count($expressionStringAsArray); $i++) {
-            $currentNumber = '';
-            while ($this->checkIsNumeric($expressionStringAsArray[$i])) {
-                $currentNumber .= $expressionStringAsArray[$i];
-                if($i < $arrayLength - 1) {
-                    $i++;
-                } else {
-                    break;
-                }
-            }
-            if(strlen($currentNumber) > 0) {
-                $preparedArray[] = $currentNumber;
-            }
-            if(!$this->checkIsNumeric($expressionStringAsArray[$i])) {
-                $preparedArray[] = $expressionStringAsArray[$i];
-            }
-        }
-        return $preparedArray;
-    }
-
-    /**
-     * Handles splitted array item
+     * Handles expression's item
      *
      * @param string $item
-     * @param array $numericArray
-     * @param array $characterArray
+     * @param bool $isNumeric
      * @return bool
      */
-    private function handleItem(string $item, array &$numericArray, array &$characterArray) : bool
+    private function handleItem(string $item, bool $isNumeric) : bool
     {
-        $prevCharacter = $this->getPrevCharacter($characterArray);
-        if($this->checkIsNumeric($item)){
-            $numericArray[] = $item;
+        if($isNumeric){
+            $this->numbersStack->push($item);
         } else {
-            if($priority = $this->operation->getPriority($item)){
-                if($prevCharacter && $priority <= $this->operation->getPriority($prevCharacter)) {
-                    $prevNumbers =  $this->getTwoLastNumbers($numericArray);
-                    $calculatedResult = $this->operation->calculate($prevNumbers, $prevCharacter);
-                    $numericArray[] = $calculatedResult;
-                    array_pop($characterArray);
-                }
-            } elseif ($item === ')') {
-                while(($currentOperation = array_pop($characterArray)) !== '(') {
-                    $this->executeCurrentOperation($numericArray, $currentOperation);
-                }
-                return false;
-            }
-            $characterArray[] = $item;
+            return $this->handleOperandItem($item);
         }
         return true;
     }
 
     /**
-     * Checks is value numeric
+     * Handles operand item
      *
-     * @param string $char
+     * @param string $operand
      * @return bool
      */
-    private function checkIsNumeric(string $char) : bool
+    private function handleOperandItem(string $operand) : bool
     {
-        return preg_match('/[0-9]/', $char) ? true : false;
-    }
-
-    /**
-     * Returns last value from characters array
-     *
-     * @param array $chars
-     * @return string|null
-     */
-    private function getPrevCharacter(array $chars) : ?string
-    {
-        $length = count($chars);
-        $prevCharacter = $chars[$length - 1];
-        return $prevCharacter;
-    }
-
-    /**
-     * Returns two last numbers from array
-     *
-     * @param array $numbersArray
-     * @return array
-     */
-    private function getTwoLastNumbers(array &$numbersArray) : array
-    {
-        $numbers = [
-            1 => array_pop($numbersArray),
-            0 => array_pop($numbersArray)
-        ];
-        return $numbers;
+        $prevOperand = $this->operandsStack->getPrevOperand();
+        if($this->operation->compareOperandsPriority($operand, $prevOperand)) {
+            $this->executeCurrentOperation($prevOperand);
+            $this->operandsStack->pop();
+        } elseif ($operand === ')') {
+            while(($currentOperation = $this->operandsStack->pop()) !== '(') {
+                $this->executeCurrentOperation($currentOperation);
+            }
+            return false;
+        }
+        $this->operandsStack->push($operand);
+        return true;
     }
 
     /**
      * Executes arithmetic operation
      *
-     * @param array $numericArray
      * @param string $operation
      */
-    private function executeCurrentOperation(array &$numericArray, string $operation) : void
+    private function executeCurrentOperation(string $operation) : void
     {
-        $numbers = $this->getTwoLastNumbers($numericArray);
+        $numbers = $this->numbersStack->getTwoLastNumbers();
         $result = $this->operation->calculate($numbers, $operation);
-        $numericArray[] = $result;
+        $this->numbersStack->push($result);
     }
 }

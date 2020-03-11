@@ -1,0 +1,11 @@
+{
+    "name": "vnukga/oop-calulator",
+    "type": "project",
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "App\\": "Calculator"
+        }
+    },
+    "require": {}
+}
