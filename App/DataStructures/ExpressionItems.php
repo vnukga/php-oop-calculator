@@ -2,6 +2,7 @@
 
 namespace App\DataStructures;
 
+use App\DataStructures\Exceptions\InvalidExpressionException;
 use SplDoublyLinkedList;
 
 /**
@@ -12,17 +13,30 @@ use SplDoublyLinkedList;
  */
 class ExpressionItems extends SplDoublyLinkedList
 {
+    private $validationPattern = '/^[0-9+()\-*\/]*$/';
+
+    /**
+     * ExpressionItems constructor.
+     * @param string $expression
+     * @throws InvalidExpressionException
+     */
+    public function __construct(string $expression)
+    {
+        $this->validateExpression($expression);
+        $this->handleExpression($expression);
+    }
+
     /**
      * Handles expression with numbers and operands
      *
-     * ExpressionItems constructor.
      * @param string $expression
      */
-    public function __construct(string $expression)
+    private function handleExpression(string $expression) : void
     {
         for ($i = 0; $i < $arrayLength = strlen($expression); $i++) {
             $currentNumber = '';
             while ($this->checkIsNumeric($expression[$i])) {
+                //TODO: make validators
                 $currentNumber .= $expression[$i];
                 if($i < $arrayLength - 1) {
                     $i++;
@@ -37,6 +51,19 @@ class ExpressionItems extends SplDoublyLinkedList
                 $this->push($expression[$i]);
             }
         }
+    }
+
+    /**
+     * Validates expression string
+     *
+     * @param string $expression
+     * @throws InvalidExpressionException
+     */
+    private function validateExpression(string $expression) : void
+    {
+         if(!preg_match($this->validationPattern, $expression)) {
+             throw new InvalidExpressionException();
+         }
     }
 
     /**

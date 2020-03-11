@@ -6,6 +6,7 @@ namespace App;
 use App\DataStructures\ExpressionItems;
 use App\DataStructures\NumbersStack;
 use App\DataStructures\OperandsStack;
+use App\Exceptions\BaseCalculatorException;
 use App\Math\Operation;
 
 /**
@@ -52,16 +53,21 @@ class Calculator
      */
     public function calculateExpression(string $expression) : ?string
     {
-        $expressionItems =new ExpressionItems($expression);
-        foreach ($expressionItems as $key => $item){
-            $this->handleItem($item, $expressionItems->isCurrentItemNumeric());
-        }
-        while(count($this->operandsStack) > 0) {
-            $currentOperation = $this->operandsStack->pop();
-            $this->executeCurrentOperation($currentOperation);
-        }
-        if(count($this->numbersStack) === 1) {
-            return $this->numbersStack->pop();
+        try {
+            $expressionItems = new ExpressionItems($expression);
+            foreach ($expressionItems as $key => $item){
+                $this->handleItem($item, $expressionItems->isCurrentItemNumeric());
+            }
+            while(count($this->operandsStack) > 0) {
+                $currentOperation = $this->operandsStack->pop();
+                $this->executeCurrentOperation($currentOperation);
+            }
+            if(count($this->numbersStack) === 1) {
+                return $this->numbersStack->pop();
+            }
+        } catch (BaseCalculatorException $exception) {
+            echo $exception->getMessage();
+            return false;
         }
         return false;
     }
@@ -72,6 +78,7 @@ class Calculator
      * @param string $item
      * @param bool $isNumeric
      * @return bool
+     * @throws Math\Exceptions\InvalidOperationException
      */
     private function handleItem(string $item, bool $isNumeric) : bool
     {
@@ -88,6 +95,7 @@ class Calculator
      *
      * @param string $operand
      * @return bool
+     * @throws Math\Exceptions\InvalidOperationException
      */
     private function handleOperandItem(string $operand) : bool
     {
@@ -109,6 +117,7 @@ class Calculator
      * Executes arithmetic operation
      *
      * @param string $operation
+     * @throws Math\Exceptions\InvalidOperationException
      */
     private function executeCurrentOperation(string $operation) : void
     {

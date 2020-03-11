@@ -3,6 +3,7 @@
 
 namespace App\Math;
 
+use App\Math\Exceptions\InvalidOperationException;
 use App\Math\Operations\Delete;
 use App\Math\Operations\Minus;
 use App\Math\Operations\Multiply;
@@ -32,6 +33,7 @@ class Operation
      * @param array $numbers
      * @param string $operand
      * @return float
+     * @throws InvalidOperationException
      */
     public function calculate(array $numbers, string $operand) : float
     {
@@ -48,6 +50,8 @@ class Operation
             case '/':
                 $operation = new Delete();
                 break;
+            default:
+                throw new InvalidOperationException();
         }
         return $this->executeOperation($numbers, $operation);
     }
